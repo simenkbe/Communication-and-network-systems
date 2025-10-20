@@ -23,8 +23,8 @@ disp('Codewords for G2:');
 disp(C2);
 
 % For each codeword compute the Hamming weight
-WhC1 = zeros(size(C1,1),0);
-WhC2 = zeros(size(C2,1),0);
+WhC1 = zeros(size(C1,1),1);
+WhC2 = zeros(size(C2,1),1);
 
 for j = 1:size(C1,1)
     codeword1 = C1(j, :);
@@ -126,3 +126,25 @@ disp(encodedC2);
 
 %Transmit it over the BSC channel with error probability p ∈ ps (for example, use
 %y=bsc(codeword,p))
+
+receivedC1 = zeros(length(ps), n);
+receivedC2 = zeros(length(ps), n);
+
+for idx = 1:length(ps)
+    p = ps(idx);
+    receivedC1(idx, :) = bsc(encodedC1, p);
+    receivedC2(idx, :) = bsc(encodedC2, p);
+end
+
+% Compute the syndrome
+
+
+% s = y * H
+
+syndrome1 = mod(receivedC1 * H1', 2)
+syndrome2 = mod(receivedC2 * H2', 2)
+
+% If the syndrome is zero, check if there is an undetected error
+
+
+
