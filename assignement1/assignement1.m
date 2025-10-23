@@ -145,6 +145,73 @@ syndrome1 = mod(receivedC1 * H1', 2)
 syndrome2 = mod(receivedC2 * H2', 2)
 
 % If the syndrome is zero, check if there is an undetected error
+% Repeat until you observe at least 100 undetected error events
+targetUndetected = 100;
 
+idx_ps = 0;
+P_UE_sim1 = zeros(size(ps));
+P_UE_sim2 = zeros(size(ps));
+
+for idx = 1:length(ps)
+    p = ps(idx);
+
+    % reinitialize for each p values 
+    undetected1 = 0;
+    undetected2 = 0;
+    total1 = 0;
+    total2 = 0;
+
+    % continue and wait that undetected1=>100 and undected2 =>100
+    while (undetected1 < targetUndetected) || (undetected2 < targetUndetected)
+        % generate a k-bit message
+        infoVector = randi([0 1], 1, k);
+
+        % Encode
+        c1 = mod(infoVector * G1, 2);
+        c2 = mod(infoVector * G2, 2);
+
+        % Transmit on BSC 
+        y1 = bsc(c1, p);
+        y2 = bsc(c2, p);
+
+        % Compute syndrome
+        s1 = mod(y1 * H1', 2);
+        s2 = mod(y2 * H2', 2);
+
+        total1 = total1 + 1;
+        total2 = total2 + 1;
+
+        % check for an error even if the syndrome is null (undetected
+        % error)
+        if all(s1 == 0) && any(y1 ~= c1)
+            undetected1 = undetected1 + 1;
+        end
+        if all(s2 == 0) && any(y2 ~= c2)
+            undetected2 = undetected2 + 1;
+        end
+
+    end
+
+%Compute the undetected error probability (number of undetected error
+%events/number of transmitted codewords)
+    P_UE_sim1(idx) = undetected1 / total1;
+    P_UE_sim2(idx) = undetected2 / total2;
+
+    fprintf('p = %.3f : G1 -> undet=%d, total=%d, P_UE_sim=%.3e\n', p, undetected1, total1, P_UE_sim1(idx));
+    fprintf('p = %.3f : G2 -> undet=%d, total=%d, P_UE_sim=%.3e\n', p, undetected2, total2, P_UE_sim2(idx));
+
+end
+
+% Repeat for all p ∈ ps and add the curve to the previous figure
+hold on;
+loglog(ps, P_UE_sim1, '--o', 'DisplayName', 'Simulation G1 (100 undetected)', 'LineWidth', 1.2);
+loglog(ps, P_UE_sim2, '--s', 'DisplayName', 'Simulation G2 (100 undetected)', 'LineWidth', 1.2);
+legend('Location','best');
+grid on;
+
+disp('Proba analiticals (G1) :'); disp(P_UE1);
+disp('Proba analiticals (G2) :'); disp(P_UE2);
+disp('Proba simulated  (G1) :'); disp(P_UE_sim1);
+disp('Proba simulated  (G2) :'); disp(P_UE_sim2);
 
 
