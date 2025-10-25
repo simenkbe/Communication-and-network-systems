@@ -43,12 +43,12 @@ disp(WhC2);
 % Compute Ai (number of codewords with Hamming weight 1 ≤ i ≤ n)
 
 n = size(C1, 2); % Length of the codewords
-Ai1 = zeros(n, 1); % Initialize Ai array to count codewords for each Hamming weight
-Ai2 = zeros(n, 1);
+Ai1 = zeros(n+1, 1); % Initialize Ai array to count codewords for each Hamming weight
+Ai2 = zeros(n+1, 1);
 
-for i = 1:n
-    Ai1(i) = sum(WhC1 == i); % Count codewords with Hamming weight i 
-    Ai2(i) = sum(WhC2 == i);
+for i = 0:n
+    Ai1(i+1) = sum(WhC1 == i); % Count codewords with Hamming weight i 
+    Ai2(i+1) = sum(WhC2 == i);
 end
 
 % Display the counts of codewords for each Hamming weight
@@ -67,8 +67,8 @@ P_UE2 = zeros(size(p_values));
 
 for idx = 1:length(p_values)
     p = p_values(idx);
-    P_UE1(idx) = sum(Ai1' .* (p .^ (1:n)) .* ((1 - p) .^ (n - (1:n))));
-    P_UE2(idx) = sum(Ai2' .* (p .^ (1:n)) .* ((1 - p) .^ (n - (1:n))));
+    P_UE1(idx) = sum(Ai1' .* (p .^ (0:n)) .* ((1 - p) .^ (n - (0:n))));
+    P_UE2(idx) = sum(Ai2' .* (p .^ (0:n)) .* ((1 - p) .^ (n - (0:n))));
 end
 
 % Display the probabilities of undetected error for both codewords
