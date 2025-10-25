@@ -215,3 +215,73 @@ disp('Proba simulated  (G1) :'); disp(P_UE_sim1);
 disp('Proba simulated  (G2) :'); disp(P_UE_sim2);
 
 
+% Denote by P(COR, i) the probability that 
+% the transmitted message is correctly received when a maximum of 
+% i transmissions is allowed.
+
+
+%For the better of the two codes, compute 1 − P(COR, i) for i = 1, 2, 3
+% and plot the corresponding curves as a function of p.
+
+% G2 is better for the P(UE) proba
+
+best = 'G2'
+P_UE_best = P_UE2;    % P(UE) for G2
+n = size(G2, 2);      % Lenght of the code
+p_grid = p_values;
+
+maxTransmissions = 3;
+
+P_COR = zeros(length(p_grid), maxTransmissions); % Proba of correct receiption
+P_fail = zeros(length(p_grid), maxTransmissions); % 1 - P_COR 
+
+for idx = 1:length(p_grid)
+    p = p_grid(idx);
+
+    Pc = (1-p)^n; %Proba of a correct transmission
+
+    Pue = P_UE_best(idx);  % proba of an UE
+
+    Prej = 1 - Pc - Pue; %Proba of a detected error
+
+    %Computation of P_COR(i) 
+
+    for i = 1:maxTransmissions
+        if abs(1 - Prej) < eps
+            P_COR(idx, i) = Pc; % rare case
+        else
+            P_COR(idx, i) = Pc * (1 - Prej^i) / (1-Prej); 
+        end
+    end
+    P_fail(idx, :) = 1 - P_COR(idx, :); % Compute failure probabilities
+end
+
+
+
+
+% plot1 P_COR(i) in function of p
+figure;
+hold on;
+markers = {'-o','-s','-^'};
+for i = 1:maxTransmissions
+    loglog(p_grid, P_fail(:, i), markers{i}, 'LineWidth', 1.4,'DisplayName', sprintf('1 - P_{COR}, i=%d', i));
+end
+set(gca, 'XDir', 'reverse');
+xlabel('p (proba of bitflip)', 'FontWeight', 'bold');
+ylabel('1 - P_{COR}(i)', 'FontWeight', 'bold');
+title(sprintf('Proba of failure with max %d transmissions — Code %s',maxTransmissions, best), 'FontWeight', 'bold');
+legend('Location','best');
+grid on;
+hold off;
+
+% numerical part
+disp('=== important figure of part 4 ===');
+disp('   p         Pc          Pue         Prej        1-P_COR(i=1..3)');
+for idx = 1:length(p_grid)
+    p = p_grid(idx);
+    Pc = (1 - p)^n;
+    Pue = P_UE_best(idx);
+    Prej = 1 - Pc - Pue;
+    fprintf('p=%.1e  Pc=%.3e  Pue=%.3e  Prej=%.3e  [%.3e  %.3e  %.3e]\n', ...
+        p, Pc, Pue, Prej, P_fail(idx,1), P_fail(idx,2), P_fail(idx,3));
+end
