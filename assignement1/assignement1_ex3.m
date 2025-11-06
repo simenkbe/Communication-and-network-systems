@@ -56,16 +56,21 @@ ps = [0.1, 0.09, 0.08, 0.07, 0.06, 10^-2, 10^-3];
 
 
 targetWrongs = [10, 100]; 
-Pw_sim_all = zeros(length(ps), length(targetWrongs));
+Pw_sim_raw = zeros(length(ps), length(targetWrongs));
+Pw_sim_dec = zeros(length(ps), length(targetWrongs));
 
 for tw = 1:length(targetWrongs) 
     targetWrong = targetWrongs(tw); 
     for idx = 1:length(ps)
         p = ps(idx);
-        num_errors = 0;
-        totalTrials = 0;
+        num_errors_dec = 0;
+        num_errors_raw = 0;
+        totalTrials_dec = 0;
+        totalTrials_raw = 0;
 
-        while num_errors < targetWrong
+
+
+        while num_errors_dec < targetWrong
 
             % take a message and encode it
             msg = randi([0 1], 1, k);
@@ -90,25 +95,47 @@ for tw = 1:length(targetWrongs)
             % Check if the received codeword can be corrected
             if any(c_hat ~= c)
                 % Count the error if the decoded codeword differs from the transmitted one
-                num_errors = num_errors + 1;
+                num_errors_dec = num_errors_dec + 1;
             end
-            totalTrials = totalTrials + 1; % Increment the total trials counter
+            totalTrials_dec = totalTrials_dec + 1; % Increment the total trials counter
         end
-        Pw_sim_all(idx, tw) = num_errors / totalTrials; % Store the simulated probability
-        fprintf(' targetWrong=%d: p = %.2f : observed wrong = %d, totalTrials = %d, Pw_sim = %.6e\n', ...
-             targetWrong,p, num_errors, totalTrials, Pw_sim_all(idx,tw));
+
+        while num_errors_raw < targetWrong
+
+            % take a message and encode it
+            msg = randi([0 1], 1, k);
+            c = mod(msg * G, 2);
+
+            % BSC canal
+            error_pattern = rand(1, n) < p;
+            y = mod(c + error_pattern, 2);
+
+            if sum(error_pattern) > t
+                num_errors_raw = num_errors_raw + 1;
+            end
+            totalTrials_raw =totalTrials_raw +1;
+
+        end
+        Pw_sim_raw(idx, tw) = num_errors_raw / totalTrials_raw; % Store the simulated probability
+        Pw_sim_dec(idx, tw) = num_errors_dec / totalTrials_dec; % Store the simulated probability
+
+        fprintf(' targetWrong=%d: p = %.2f : Pw_sim_raw = %.6e, totalTrials_dec = %d, Pw_sim_dec = %.6e\n', ...
+             targetWrong,p, Pw_sim_raw(idx,tw), totalTrials_dec, Pw_sim_dec(idx,tw));
     end
 end
 
 
 % --- Plot ---
 figure;
-loglog(p_values, Pw, '-o', 'LineWidth', 1.2, 'DisplayName', 'Analytical bound');
+loglog(p_values, Pw, '-o', 'LineWidth', 1.3, 'DisplayName', 'Analytical bound');
 hold on;
-loglog(ps, Pw_sim_all(:,1), '--s', 'LineWidth', 1.2, ...
-    'DisplayName', 'Simulation (10 wrong)');
-loglog(ps, Pw_sim_all(:,2), '--^', 'LineWidth', 1.2, ...
-    'DisplayName', 'Simulation (100 wrong)');
+
+loglog(ps, Pw_sim_raw(:,1), '--sr', 'LineWidth', 1.3, 'DisplayName', 'Simulated (no decode, 10 wrong)');
+loglog(ps, Pw_sim_dec(:,1), '--sb', 'LineWidth', 1.3, 'DisplayName', 'Simulated (decode, 10 wrong)');
+
+loglog(ps, Pw_sim_raw(:,2), '-.^r', 'LineWidth', 1.3, 'DisplayName', 'Simulated (no decode, 100 wrong)');
+loglog(ps, Pw_sim_dec(:,2), '-.^b', 'LineWidth', 1.3, 'DisplayName', 'Simulated (decode, 100 wrong)');
+
 set(gca, 'XDir', 'reverse');
 xlabel('Bit error probability p');
 ylabel('P_w(e)');
