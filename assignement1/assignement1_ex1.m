@@ -67,8 +67,8 @@ P_UE2 = zeros(size(p_values));
 
 for idx = 1:length(p_values)
     p = p_values(idx);
-    P_UE1(idx) = sum(Ai1' .* (p .^ (0:n)) .* ((1 - p) .^ (n - (0:n))));
-    P_UE2(idx) = sum(Ai2' .* (p .^ (0:n)) .* ((1 - p) .^ (n - (0:n))));
+    P_UE1(idx) = sum(Ai1(2:end)' .* (p .^ (1:n)) .* ((1 - p) .^ (n - (1:n))));
+    P_UE2(idx) = sum(Ai2(2:end)' .* (p .^ (1:n)) .* ((1 - p) .^ (n - (1:n))));
 end
 
 % Display the probabilities of undetected error for both codewords
@@ -141,8 +141,8 @@ end
 
 % s = y * H
 
-syndrome1 = mod(receivedC1 * H1', 2)
-syndrome2 = mod(receivedC2 * H2', 2)
+syndrome1 = mod(receivedC1 * H1', 2);
+syndrome2 = mod(receivedC2 * H2', 2);
 
 % If the syndrome is zero, check if there is an undetected error
 % Repeat until you observe at least 100 undetected error events
@@ -223,11 +223,12 @@ disp('Proba simulated  (G2) :'); disp(P_UE_sim2);
 %For the better of the two codes, compute 1 − P(COR, i) for i = 1, 2, 3
 % and plot the corresponding curves as a function of p.
 
-% G2 is better for the P(UE) proba
+% G1 is way better we can see it during the testing of the number 
+%of UE
 
-best = 'G2'
-P_UE_best = P_UE2;    % P(UE) for G2
-n = size(G2, 2);      % Lenght of the code
+best = 'G1';
+P_UE_best = P_UE1;    % P(UE) for G1
+n = size(G1, 2);      % Lenght of the code
 p_grid = p_values;
 
 maxTransmissions = 3;
@@ -238,11 +239,11 @@ P_fail = zeros(length(p_grid), maxTransmissions); % 1 - P_COR
 for idx = 1:length(p_grid)
     p = p_grid(idx);
 
-    Pc = (1-p)^n; %Proba of a correct transmission
+    Pc = (1-p)^n; %Proba of an correct transmission
 
     Pue = P_UE_best(idx);  % proba of an UE
 
-    Prej = 1 - Pc - Pue; %Proba of a detected error
+    Prej = 1- Pc - Pue; %Proba of a detected error
 
     %Computation of P_COR(i) 
 
@@ -273,15 +274,3 @@ title(sprintf('Proba of failure with max %d transmissions — Code %s',maxTransm
 legend('Location','best');
 grid on;
 hold off;
-
-% numerical part
-disp('=== important figure of part 4 ===');
-disp('   p         Pc          Pue         Prej        1-P_COR(i=1..3)');
-for idx = 1:length(p_grid)
-    p = p_grid(idx);
-    Pc = (1 - p)^n;
-    Pue = P_UE_best(idx);
-    Prej = 1 - Pc - Pue;
-    fprintf('p=%.1e  Pc=%.3e  Pue=%.3e  Prej=%.3e  [%.3e  %.3e  %.3e]\n', ...
-        p, Pc, Pue, Prej, P_fail(idx,1), P_fail(idx,2), P_fail(idx,3));
-end

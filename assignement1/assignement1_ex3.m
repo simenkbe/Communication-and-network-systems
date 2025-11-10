@@ -26,8 +26,9 @@ fprintf('t = %d\n', t);
 
 % Multiplicity (nbr of codeword of each  weight)
 multiplicities = histcounts(weights,0:n+1);
-fprintf('Multiplicities :\n');
-disp(multiplicities);
+Ai = multiplicities(2:end);
+fprintf('Ai (i=1,...,n :\n');
+disp(Ai);
 
 %Compute the upper bound on the codeword error probability Pw (e) by
 %using the analytical formula for p ∈ {10−1, 10−2, 10−3, 10−4, 10−5, 10−6}
@@ -52,11 +53,10 @@ end
 
 %Plot the curve when 10 wrong codewords are observed for each value of ps
 
-ps = [0.1, 0.09, 0.08, 0.07, 0.06, 10^-2, 10^-3];
+ps = [0.1, 0.09, 0.08, 0.07, 0.06];
 
 
 targetWrongs = [10, 100]; 
-Pw_sim_raw = zeros(length(ps), length(targetWrongs));
 Pw_sim_dec = zeros(length(ps), length(targetWrongs));
 
 for tw = 1:length(targetWrongs) 
@@ -64,9 +64,7 @@ for tw = 1:length(targetWrongs)
     for idx = 1:length(ps)
         p = ps(idx);
         num_errors_dec = 0;
-        num_errors_raw = 0;
         totalTrials_dec = 0;
-        totalTrials_raw = 0;
 
 
 
@@ -100,27 +98,10 @@ for tw = 1:length(targetWrongs)
             totalTrials_dec = totalTrials_dec + 1; % Increment the total trials counter
         end
 
-        while num_errors_raw < targetWrong
-
-            % take a message and encode it
-            msg = randi([0 1], 1, k);
-            c = mod(msg * G, 2);
-
-            % BSC canal
-            error_pattern = rand(1, n) < p;
-            y = mod(c + error_pattern, 2);
-
-            if sum(error_pattern) > t
-                num_errors_raw = num_errors_raw + 1;
-            end
-            totalTrials_raw =totalTrials_raw +1;
-
-        end
-        Pw_sim_raw(idx, tw) = num_errors_raw / totalTrials_raw; % Store the simulated probability
         Pw_sim_dec(idx, tw) = num_errors_dec / totalTrials_dec; % Store the simulated probability
 
-        fprintf(' targetWrong=%d: p = %.2f : Pw_sim_raw = %.6e, totalTrials_dec = %d, Pw_sim_dec = %.6e\n', ...
-             targetWrong,p, Pw_sim_raw(idx,tw), totalTrials_dec, Pw_sim_dec(idx,tw));
+        fprintf(' targetWrong=%d: p = %.2f : totalTrials_dec = %d : Pw_sim_dec = %.6e\n', ...
+             targetWrong,p, totalTrials_dec, Pw_sim_dec(idx,tw));
     end
 end
 
@@ -130,10 +111,8 @@ figure;
 loglog(p_values, Pw, '-o', 'LineWidth', 1.3, 'DisplayName', 'Analytical bound');
 hold on;
 
-loglog(ps, Pw_sim_raw(:,1), '--sr', 'LineWidth', 1.3, 'DisplayName', 'Simulated (no decode, 10 wrong)');
-loglog(ps, Pw_sim_dec(:,1), '--sb', 'LineWidth', 1.3, 'DisplayName', 'Simulated (decode, 10 wrong)');
+loglog(ps, Pw_sim_dec(:,1), '--sr', 'LineWidth', 1.3, 'DisplayName', 'Simulated (decode, 10 wrong)');
 
-loglog(ps, Pw_sim_raw(:,2), '-.^r', 'LineWidth', 1.3, 'DisplayName', 'Simulated (no decode, 100 wrong)');
 loglog(ps, Pw_sim_dec(:,2), '-.^b', 'LineWidth', 1.3, 'DisplayName', 'Simulated (decode, 100 wrong)');
 
 set(gca, 'XDir', 'reverse');
