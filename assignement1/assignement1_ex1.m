@@ -1,7 +1,7 @@
 %Generate all the 2k − 1 non-zero binary vectors v 
 k = 4;
-G1 = [1 0 0 0 0 1 1 1;0 1 0 0 1 0 1 1;0 0 1 0 1 1 0 1;0 0 0 1 1 1 1 0];
-G2 = [1 0 0 0 0 1 1 0;0 1 0 0 1 0 1 1;0 0 1 0 1 1 0 1;0 0 0 1 1 1 1 0];
+    G1 = [1 0 0 0 0 1 1 1;0 1 0 0 1 0 1 1;0 0 1 0 1 1 0 1;0 0 0 1 1 1 1 0];
+    G2 = [1 0 0 0 0 1 1 0;0 1 0 0 1 0 1 1;0 0 1 0 1 1 0 1;0 0 0 1 1 1 1 0];
 
 V = de2bi(1:(2^k-1), k, 'left-msb');
 C1 = [];
@@ -99,14 +99,9 @@ grid on;
 
 ps = [0.1, 0.09, 0.08, 0.07, 0.06];
 
-Ik1 = G1(:,1:4);
-P1 = G1(:,5:end);
+H1 = [P1.' , eye(n-k)];
+H2 = [P2.' , eye(n-k)];
 
-Ik2 = G2(:,1:4);
-P2 = G2(:,5:end);
-
-H1 = [P1,Ik1];
-H2 = [P2, Ik2];
 
 %Generate a k-bit random binary information vector (for example, use
 %randi(2,1,k)-1)
