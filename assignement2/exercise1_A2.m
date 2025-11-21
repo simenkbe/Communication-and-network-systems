@@ -148,3 +148,104 @@ end
 ylim([0 max(lengths)+1]);
 legend('Runs of 0','Runs of 1');
 hold off;
+
+%Consider the entire bipolar sequence and compute the autocorrelation (view the sequence as
+%periodic)
+
+%Plot the autocorrelation
+
+X_fft = fft(bipolar);
+R = ifft(X_fft .* conj(X_fft)); % raw Autocorrelation
+R = fftshift(R); %center at tau = 0
+
+%lags creation 
+lags = -(N-1)/2 : (N-1)/2;
+
+figure;
+plot(lags, R);
+grid on;
+title('Autocorrelation of the m-sequence (Periodic)');
+xlabel('\tau (lags)');
+ylabel('R(\tau)');
+xlim([-N/2 N/2]);
+
+%for an ideal M-sequence, R(0) = N and R(tau) = -1 everywhere
+
+% Consider 1 ≤ z ≤ 200
+
+mpsl_values = zeros(1, 200);
+z_range = 1:200;
+
+%For each value of z cancel the last z bits from the entire sequence to obtain a
+%truncated sequence vz of N − z bits
+
+for k = 1:length(z_range)
+    z = z_range(k);
+    current_len = N - z;
+    v_z = bipolar(1:current_len); %keep the N-z first bits
+
+    %Compute the autocorrelation function of the bipolar truncated sequence v ′
+    X_z = fft(v_z);
+    R_z = ifft(X_z .* conj(X_z));
+
+    %Compute the Maximum Peak Side Lobe (MPSL) of v ′
+    R_z(1) = 0;
+    mpsl_values(k) = max(abs(R_z));
+end
+
+% Plot MPSL(z) vs. z
+
+figure;
+plot(z_range, mpsl_values, 'LineWidth', 1.5);
+grid on;
+title('MPSL vs Truncation Length z');
+xlabel('z (bits removed)');
+ylabel('MPSL');
+
+% Fix z = 23
+
+z_fix = 23;
+
+% Consider the truncated sequence vz of N − z bits
+len_trunc = N - z_fix;
+
+%first seed allready used 
+seq_trunc_1 = bipolar(1:len_trunc);
+R_trunc_1 = ifft(fft(seq_trunc_1) .* conj(fft(seq_trunc_1)));
+R_trunc_1 = fftshift(R_trunc_1);
+
+%New seed choose an arbitrary seed different [0 0 0 0 0 0 0 0 0 1]
+
+lfsr2 = [0 0 0 0 0 0 0 0 0 1]; 
+seq2 = zeros(1, N);
+for i = 1:N
+    seq2(i) = lfsr2(1);
+    feedback = xor(lfsr2(10 - 10 + 1), lfsr2(10 - 3 + 1)); % Taps [10 3]
+    lfsr2(1:end-1) = lfsr2(2:end);
+    lfsr2(end) = feedback;
+end
+bipolar2 = 2*seq2 - 1;
+seq_trunc_2 = bipolar2(1:len_trunc);
+
+% Compute the autocorrelation function of the bipolar truncated sequence v ′
+R_trunc_2 = ifft(fft(seq_trunc_2) .* conj(fft(seq_trunc_2)));
+R_trunc_2 = fftshift(R_trunc_2);
+
+%Plot it
+lags_trunc = -(len_trunc-1)/2 : (len_trunc-1)/2;
+
+figure;
+subplot(2,1,1);
+plot(lags_trunc, R_trunc_1); grid on;
+title(['Autocorrelation (z=23) - Seed 1']);
+ylabel('R(\tau)'); xlim([-500 500]);
+
+subplot(2,1,2);
+plot(lags_trunc, R_trunc_2); grid on;
+title(['Autocorrelation (z=23) - Seed 2']);
+xlabel('\tau'); ylabel('R(\tau)'); xlim([-500 500]);
+
+
+% for a complete M-sequence, the seed doesn't matter (cyclic shift) 
+%but for a troncated sequence, modifying the seed, modify the window of
+%bit
