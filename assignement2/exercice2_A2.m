@@ -235,13 +235,13 @@ fprintf('max value of r_M: %d\n', r_M_gold);
 figure('Name', 'Exercise 2 Part 3 - Bounds');
 hold on; grid on;
 
-% Tracé des bornes
+% bound trace
 plot(K_axis, Sidelnikov, 'r-', 'LineWidth', 1.5);
 plot(K_axis, W_orig, 'b-o', 'MarkerSize', 4);
 plot(K_axis, W_simple, 'c-', 'LineWidth', 1.5);
 plot(K_axis, W_approx, 'k-', 'LineWidth', 1);
 
-% Ajout du point expérimental r_M
+% add r_M
 plot(K_gold, r_M_gold, 'kp', 'MarkerSize', 12, 'MarkerFaceColor', 'y');
 text(K_gold+5, r_M_gold, sprintf('  Gold (Measured)\n  r_M = %d', r_M_gold), 'FontSize', 10, 'BackgroundColor', 'w');
 
@@ -251,3 +251,136 @@ title(['Welch/Sidelnikov Bounds and Gold Performance (N=' num2str(N) ')']);
 legend('Sidelnikov Bound', 'Welch Original', 'Welch Formula', 'Welch Sqrt(N)', 'Measured r_M (Gold)', 'Location', 'SouthEast');
 xlim([0 200]);
 ylim([0 25]);
+
+
+%Starting from the Gold set of K = 129 sequences, reduce the length of the
+%sequences to N = 126. Compute rM (explain how you computed its value).
+
+clear variables; close all; clc;
+
+%new params
+
+m = 7;
+N_original = 2^m - 1; % 127
+N_new = 126;          % New lenght
+K_max = 200;
+K_axis = 1:K_max;
+
+goldGen = comm.GoldSequence('FirstPolynomial', 'x^7+x^4+1', ...
+    'SecondPolynomial', 'x^7+x+1', ...
+    'FirstInitialConditions', [0 0 0 0 0 0 1], ...
+    'SecondInitialConditions', [0 0 0 0 0 0 1], ...
+    'Index', 0, 'SamplesPerFrame', N_original);
+
+K_gold = N_original + 2; % 129 sequences
+seqs_trunc = zeros(K_gold, N_new);
+
+idx_list = [-2, -1, 0:126];
+
+for i = 1:K_gold
+    goldGen.release();
+    goldGen.Index = idx_list(i);
+    full_seq = (2*goldGen() - 1)'; %full Sequence 1x127
+    
+    % keep only the 126 first bits
+    seqs_trunc(i, :) = full_seq(1:N_new);
+end
+
+r_M_measured = 0;
+
+for i = 1:K_gold
+    for j = i:K_gold
+        % cyclic corelation computation with N=126
+        seq1 = seqs_trunc(i, :);
+        seq2 = seqs_trunc(j, :);
+        
+        R_temp = ifft(fft(seq1) .* conj(fft(seq2)));
+        
+        if i == j
+            % Autocorrelation without the peak at tau = 0
+            R_temp(1) = 0;
+            current_max = max(abs(R_temp));
+        else
+            % Cross-correlation
+            current_max = max(abs(R_temp));
+        end
+        
+        if current_max > r_M_measured
+            r_M_measured = current_max;
+        end
+    end
+end
+
+fprintf('==> r_M measured for N=126 : %d\n', r_M_measured);
+
+%New bounds computation
+N = N_new;
+
+
+% A. Welch Approx
+W_approx = ceil(sqrt(N)) * ones(1, K_max);
+
+% B. Welch Formula
+W_simple = zeros(1, K_max);
+for k = 1:K_max
+    val = N * sqrt((k-1)/(k*N - 1));
+    W_simple(k) = ceil(val);
+end
+
+% C. Welch Original & Sidelnikov
+W_orig = zeros(1, K_max);
+Sidelnikov = zeros(1, K_max);
+s_max = 10;
+
+for k = 1:K_max
+    % Welch Original
+    max_val_W = 0;
+    for s = 1:s_max
+        num = k * N;
+        den = nchoosek(N + s - 1, s);
+        term = (1/(k*N - 1)) * ( (num/den) - 1 );
+        if term > 0
+            current_W = N * (term^(1/(2*s)));
+            if current_W > max_val_W, max_val_W = current_W; end
+        end
+    end
+    W_orig(k) = ceil(max_val_W);
+    
+    % Sidelnikov Bound (N=126 est pair, mais la formule reste applicable comme borne inf)
+    max_val_S = 0;
+    for s = 0:min(s_max, floor(2*N/5)-1)
+        term1 = (2*s + 1)*(N - s);
+        term2 = (s*(s + 1))/2;
+        num_frac = 2*s * (N^(2*s + 1));
+        den_frac = k * factorial(2*s) * nchoosek(N, s);
+        term3 = num_frac / den_frac;
+        arg = term1 + term2 - term3;
+        if arg > 0
+            current_S = sqrt(arg);
+            if current_S > max_val_S, max_val_S = current_S; end
+        end
+    end
+    Sidelnikov(k) = ceil(max_val_S);
+end
+
+% print
+figure('Name', 'Exercise 2 Part 4 - Truncated');
+hold on; grid on;
+
+% bounds
+plot(K_axis, Sidelnikov, 'r-', 'LineWidth', 1.5);
+plot(K_axis, W_orig, 'b-o', 'MarkerSize', 4);
+plot(K_axis, W_simple, 'c-', 'LineWidth', 1.5);
+plot(K_axis, W_approx, 'k-', 'LineWidth', 1);
+
+% r_m
+plot(K_gold, r_M_measured, 'kp', 'MarkerSize', 12, 'MarkerFaceColor', 'r');
+text(K_gold+5, r_M_measured, sprintf('  Truncated Gold (N=126)\n  r_M = %d', r_M_measured), ...
+    'FontSize', 10, 'BackgroundColor', 'w', 'EdgeColor', 'r');
+
+xlabel('K (Number of sequences)');
+ylabel('Correlation Magnitude');
+title('Effect of Truncation: N=126 (was 127)');
+legend('Sidelnikov', 'Welch Original', 'Welch Formula', 'Welch Sqrt(N)', 'Measured r_M (Truncated)', 'Location', 'SouthEast');
+xlim([0 200]);
+ylim([0 40]);
