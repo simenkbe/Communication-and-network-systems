@@ -9,7 +9,7 @@ N = 2^m - 1;
 taps = [10 3]; 
 
 % seed de l'énoncé
-lfsr = [1 0 1 0 1 0 1 0 1 0]; 
+lfsr = [1 0 1 0 1 0 1 0 1 1]; 
 
 sequence = zeros(1, N);
 

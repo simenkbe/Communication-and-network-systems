@@ -256,7 +256,7 @@ ylim([0 25]);
 %Starting from the Gold set of K = 129 sequences, reduce the length of the
 %sequences to N = 126. Compute rM (explain how you computed its value).
 
-clear variables; close all; clc;
+clear variables;
 
 %new params
 

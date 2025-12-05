@@ -179,7 +179,7 @@ for i = 1:length(EbN0_sim_dB)
     end
     
     BER_sim(i) = num_errors / num_bits;
-    fprintf('Eb/N0 = %d dB : BER = %.2e (%d erreurs)\n', ...
+    fprintf('Eb/N0 = %d dB : BER = %.2e (%d errors)\n', ...
             EbN0_sim_dB(i), BER_sim(i), num_errors);
 end
 
