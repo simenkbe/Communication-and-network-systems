@@ -13,7 +13,9 @@ constellation = XI + 1j*XQ;
 % --- Visualization of subcarriers k=1, 2, 3 ---
 % Note: k corresponds to the frequency index. k=0 is DC (Guard).
 % k=1 is the first active frequency (1 kHz).
-figure('Name', 'OFDM Subcarriers', 'Color', 'w');
+figure('Name', 'OFDM Subcarriers', 'Color', 'k');
+
+
 colors = {'b', 'r', 'g'};
 
 for k = 1:3
@@ -54,12 +56,16 @@ for k = 1:3
     
     % 4. Plot
     subplot(3, 1, k);
-    plot(t*1000, real(x_time_smooth), colors{k}, 'LineWidth', 1.5);
+    plot(t*1000, real(x_time_smooth), colors{k}, 'LineWidth', 2);
+    set(gca, 'Color', 'k', 'XColor', 'w', 'YColor', 'w', ...
+             'GridColor', 'w', 'GridAlpha', 0.4, 'LineWidth', 1.2);
     grid on;
-    title(['Subcarrier k = ' num2str(k) ' (f = ' num2str(k) ' kHz)']);
-    xlabel('Time [ms]');
-    ylabel('Amplitude');
+    
+    % Titres en blanc
+    title(['Subcarrier k=' num2str(k)], 'Color', 'w', 'FontWeight', 'bold');
+    ylabel('Amplitude', 'Color', 'w');
     xlim([0 1]);
+
 end
 sgtitle('Visualization of individual OFDM subcarriers');
 
