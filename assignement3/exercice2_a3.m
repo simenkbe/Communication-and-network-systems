@@ -10,9 +10,20 @@ qam_levels = [-3 -1 1 3] / sqrt(10);
 [XI, XQ] = meshgrid(qam_levels, qam_levels);
 constellation = XI + 1j*XQ;
 
+figure('Name', '16-QAM Constellation', 'Color', 'k');
+plot(real(constellation(:)), imag(constellation(:)), 'co', ...
+    'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', 'c');
+grid on;
+axis square;
+xlim([-1.5 1.5]); ylim([-1.5 1.5]);
+
+title('16-QAM Constellation (Unitary Energy)', 'FontWeight', 'bold');
+xlabel('In-Phase (Real)');
+ylabel('Quadrature (Imag)');
+
+
+
 % --- Visualization of subcarriers k=1, 2, 3 ---
-% Note: k corresponds to the frequency index. k=0 is DC (Guard).
-% k=1 is the first active frequency (1 kHz).
 figure('Name', 'OFDM Subcarriers', 'Color', 'k');
 
 
@@ -21,21 +32,14 @@ colors = {'b', 'r', 'g'};
 for k = 1:3
     % 1. Creation of the frequency vector X for a single tone
     % Set everything to 0 except for subcarrier k
-    X_vec = zeros(N, 1);
-    
-    % Choose an arbitrary symbol (e.g., normalized 1+1j) for visualization
-    symbol_to_plot = (1 + 1j) / sqrt(2); % Fixed phase for the example
-    
-    % In MATLAB, index 1 is DC (f=0). Therefore, frequency k is at index k+1.
+    X_vec = zeros(N, 1); 
+    symbol_to_plot = (1 + 1j) / sqrt(2);
     X_vec(k + 1) = symbol_to_plot;
     
     % 2. Mirroring for real signal (2N samples technique)
-    % X' = [X_0 ... X_{N-1} 0 X^*_{N-1} ... X^*_1]
-    % Note: The central 0 corresponds to the Nyquist frequency in the extended vector
     X_prime = [X_vec; 0; conj(flipud(X_vec(2:end)))];
     
     % 3. Conversion to time domain (IFFT)
-    % N_prime = 2*N = 16
     N_prime = length(X_prime);
     
     % To obtain a smooth plot (continuous curve), we use oversampling
@@ -61,9 +65,8 @@ for k = 1:3
              'GridColor', 'w', 'GridAlpha', 0.4, 'LineWidth', 1.2);
     grid on;
     
-    % Titres en blanc
-    title(['Subcarrier k=' num2str(k)], 'Color', 'w', 'FontWeight', 'bold');
-    ylabel('Amplitude', 'Color', 'w');
+    title(['Subcarrier k=' num2str(k)], 'FontWeight', 'bold');
+    ylabel('Amplitude');
     xlim([0 1]);
 
 end
@@ -75,7 +78,6 @@ N_prime = 2 * N;        % Real IFFT size
 numSymbols = 1000;      % Number of symbols for statistics
 Ng = 1;                 % Guard bands
 
-% Indices of active carriers (avoiding DC at index 1 and the edge at index N)
 active_tones = (1 + Ng) : (N - Ng); 
 
 % Storage for all time-domain samples
